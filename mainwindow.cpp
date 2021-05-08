@@ -4,72 +4,60 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , background(new QLabel(this))
+    , versionManager(new QNetworkAccessManager(this))
+    , downloadManager(new QNetworkAccessManager(this))
+    , settings(new Settings)
+    , settingsDialog(new SettingsDialog(settings, this))
+    , console(new Console(this))
 {
     ui->setupUi(this);
     ui->progressBar->hide();
     this->setFixedSize(this->size());
-    background = new QLabel(this);
     QString imageName = QString::number(QRandomGenerator::global()->bounded(1, 17)) + ".jpg";
     QPixmap backgroundImage(":/backgrounds/" + imageName);
     background->setGeometry(0, ui->menubar->size().height(), this->size().width(), this->size().height() - ui->menubar->size().height());
     background->setPixmap(backgroundImage.scaled(background->size()));
     background->lower();
-    versionManager = new QNetworkAccessManager(this);
     connect(versionManager, &QNetworkAccessManager::finished, this, &MainWindow::poll_github);
-    downloadManager = new QNetworkAccessManager(this);
     connect(downloadManager, &QNetworkAccessManager::finished, this, &MainWindow::download_xmage);
-    settings = new QSettings("xmage", "xmage-launcher-qt", this);
-    xmageInstallLocation = settings->value("xmageInstallLocation").toString();
 }
 
 MainWindow::~MainWindow()
 {
-    if (console != nullptr)
-    {
-        delete console;
-    }
+    delete console;
+    delete settingsDialog;
     delete settings;
-    delete versionManager;
     delete downloadManager;
+    delete versionManager;
     delete background;
     delete ui;
 }
 
 void MainWindow::on_launchButton_clicked()
 {
-    if (xmageInstallLocation.isEmpty())
+    if (settings->xmageInstallLocation.isEmpty())
     {
-        xmageInstallLocation = QFileDialog::getExistingDirectory(this, "Select XMage base install location", QStandardPaths::writableLocation(QStandardPaths::HomeLocation), QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
-        if (!xmageInstallLocation.isEmpty())
-        {
-            settings->setValue("xmageInstallLocation", xmageInstallLocation);
-        }
+        QMessageBox::warning(this, "XMage location not set", "Please set XMage location in settings.");
+        settingsDialog->showXmageSettings();
+        return;
     }
-    if (!xmageInstallLocation.isEmpty())
+    if (settings->javaInstallLocation.isEmpty())
     {
-        if (process == nullptr)
-        {
-            QString clientLocation = xmageInstallLocation + "/mage-client";
-            QString clientJar = clientLocation + "/lib/mage-client-1.4.48.jar";
-            console = new QPlainTextEdit();
-            console->setGeometry(0, 0, 860, 480);
-            console->setStyleSheet("background-color:black; color:white;");
-            console->setReadOnly(true);
-            console->setWindowTitle("XMage Log");
-            console->show();
-            process = new QProcess();
-            process->setWorkingDirectory(clientLocation);
-            connect(process, &QProcess::readyRead, this, &MainWindow::update_console);
-            QString program = "java";
-            QStringList arguments;
-            arguments << "-jar" << clientJar;
-            process->start(program, arguments);
-        }
-        else
-        {
-            ui->log->appendPlainText("XMage process is already running");
-        }
+        QMessageBox::warning(this, "Java location not set", "Please set Java location in settings");
+        settingsDialog->showJavaSettings();
+        return;
     }
+    QString clientLocation = settings->xmageInstallLocation + "/mage-client";
+    QString clientJar = clientLocation + "/lib/mage-client-1.4.48.jar";
+    console->show();
+    QProcess *process = new QProcess();
+    process->setWorkingDirectory(clientLocation);
+    console->logProcess(process);
+    QString program = settings->javaInstallLocation;
+    QStringList arguments;
+    arguments << "-jar" << clientJar;
+    process->start(program, arguments);
 }
 
 void MainWindow::on_downloadButton_clicked()
@@ -86,20 +74,63 @@ void MainWindow::on_downloadButton_clicked()
 
 void MainWindow::on_testButton_clicked()
 {
-    if (xmageInstallLocation.isNull())
+    QString linuxJavaHome("/usr/lib/jvm");
+    QDir dir(linuxJavaHome);
+    QStringList filter;
+    filter << "java*";
+    QStringList javaList = dir.entryList(filter, QDir::Dirs);
+    QVector<JavaInfo> javaLocations;
+    for (int i = 0; i < javaList.size(); i++)
     {
-        ui->log->appendPlainText("NULL");
+        QFileInfo javaExe(linuxJavaHome + '/' + javaList.at(i) + "/bin/java");
+        if (javaExe.exists())
+        {
+            JavaInfo java;
+            java.filePath = javaExe.filePath();
+            const QChar *stringData = javaList.at(i).constData();
+            int firstDashIndex = -1;
+            for (int j = 0; j < javaList.at(i).size(); j++)
+            {
+                if (stringData[j] == '-')
+                {
+                    firstDashIndex = j;
+                    break;
+                }
+            }
+            if (firstDashIndex != -1 && javaList.at(i).size() > firstDashIndex + 1)
+            {
+                java.version.append("Java ");
+                firstDashIndex++;
+                for (int j = firstDashIndex; j < javaList.at(i).size() && stringData[j] != '-'; j++)
+                {
+                    java.version.append(stringData[j]);
+                }
+            }
+            else
+            {
+                java.version.append("Unknown Java Version");
+            }
+            if (javaList.at(i).contains("openjdk", Qt::CaseInsensitive))
+            {
+                java.vendor.append("OpenJDK");
+            }
+            else if (javaList.at(i).contains("oracle", Qt::CaseInsensitive))
+            {
+                java.vendor.append("Oracle");
+            }
+            else
+            {
+                java.vendor.append("Unknown Java Vendor");
+            }
+            javaLocations.append(java);
+        }
     }
-    if (xmageInstallLocation.isEmpty())
+    for (int i = 0; i < javaLocations.size(); i++)
     {
-        ui->log->appendPlainText("EMPTY");
+        ui->log->appendPlainText(javaLocations.at(i).version);
+        ui->log->appendPlainText(javaLocations.at(i).vendor);
+        ui->log->appendPlainText(javaLocations.at(i).filePath);
     }
-    ui->log->appendPlainText(xmageInstallLocation);
-}
-
-void MainWindow::update_console()
-{
-    console->appendPlainText(QString(process->readAll()));
 }
 
 void MainWindow::update_progress_bar(qint64 bytesReceived, qint64 bytesTotal)
@@ -189,11 +220,8 @@ void MainWindow::unzip_file(QString fileName)
     }
     else
     {
-        QString outDir;
-        if (!xmageDownloadLocation.isEmpty())
-        {
-            outDir.append(xmageDownloadLocation + '/');
-        }
+        QString outDir(fileName);
+        outDir.truncate(outDir.lastIndexOf('/') + 1);
         zip_int64_t numEntries = zip_get_num_entries(zip, 0);
         for (zip_int64_t i = 0; i < numEntries; i++)
         {
@@ -249,4 +277,9 @@ void MainWindow::unzip_file(QString fileName)
     }
     zip_discard(zip);
     ui->log->appendPlainText("Unzip complete");
+}
+
+void MainWindow::on_actionSettings_triggered()
+{
+    settingsDialog->show();
 }

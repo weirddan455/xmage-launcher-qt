@@ -6,20 +6,22 @@
 #include <QPlainTextEdit>
 #include <QRandomGenerator>
 #include <QLabel>
+#include <QMessageBox>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkRequest>
 #include <QtNetwork/QNetworkReply>
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
-#include <QMessageBox>
 #include <QSaveFile>
 #include <QDir>
 #include <QFileDialog>
 #include <QStandardPaths>
-#include <QSettings>
 #include <zip.h>
 #include <string.h>
+#include "console.h"
+#include "settingsdialog.h"
+#include "settings.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -37,22 +39,21 @@ private slots:
     void on_launchButton_clicked();
     void on_downloadButton_clicked();
     void on_testButton_clicked();
-    void update_console();
     void poll_github(QNetworkReply *reply);
     void download_xmage(QNetworkReply *reply);
     void update_progress_bar(qint64 bytesReceived, qint64 bytesTotal);
+    void on_actionSettings_triggered();
 
 private:
     Ui::MainWindow *ui;
     QLabel *background;
     QNetworkAccessManager *versionManager;
     QNetworkAccessManager *downloadManager;
-    QSettings *settings;
-    QProcess *process = nullptr;
-    QPlainTextEdit *console = nullptr;
+    Settings *settings;
+    SettingsDialog *settingsDialog;
+    Console *console;
     QString latestXmageVersion;
     QString xmageDownloadLocation;
-    QString xmageInstallLocation;
 
     void unzip_file(QString fileName);
 };
