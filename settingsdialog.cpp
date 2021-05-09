@@ -102,7 +102,7 @@ void SettingsDialog::on_javaTable_cellClicked(int row, int column)
     ui->javaSelection->setText(ui->javaTable->item(row, 2)->text());
 }
 
-void SettingsDialog::on_xmageBrowse_clicked()
+void SettingsDialog::on_javaBrowse_clicked()
 {
     QString fileName = QFileDialog::getOpenFileName(this, "Select Java Executable");
     if (!fileName.isEmpty())
@@ -111,7 +111,7 @@ void SettingsDialog::on_xmageBrowse_clicked()
     }
 }
 
-void SettingsDialog::on_javaBrowse_clicked()
+void SettingsDialog::on_xmageBrowse_clicked()
 {
     QString location = QFileDialog::getExistingDirectory(this, "Select XMage Install Location", QStandardPaths::writableLocation(QStandardPaths::HomeLocation), QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
     if (!location.isEmpty())

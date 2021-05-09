@@ -10,16 +10,20 @@ CONFIG += c++11
 
 SOURCES += \
     console.cpp \
+    downloadmanager.cpp \
     main.cpp \
     mainwindow.cpp \
     settings.cpp \
-    settingsdialog.cpp
+    settingsdialog.cpp \
+    unzipthread.cpp
 
 HEADERS += \
     console.h \
+    downloadmanager.h \
     mainwindow.h \
     settings.h \
-    settingsdialog.h
+    settingsdialog.h \
+    unzipthread.h
 
 FORMS += \
     mainwindow.ui \
