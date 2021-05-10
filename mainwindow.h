@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QStandardPaths>
+#include <QDesktopServices>
 #include "settingsdialog.h"
 #include "settings.h"
 #include "xmageprocess.h"
@@ -37,6 +38,9 @@ private slots:
     void on_downloadButton_clicked();
     void on_testButton_clicked();
     void on_actionSettings_triggered();
+    void on_actionQuit_triggered();
+    void on_actionForum_triggered();
+    void on_actionWebsite_triggered();
 
 private:
     Ui::MainWindow *ui;
@@ -44,5 +48,6 @@ private:
     Settings *settings;
     SettingsDialog *settingsDialog;
     QPlainTextEdit *console;
+    void loadBrowser(QString url);
 };
 #endif // MAINWINDOW_H

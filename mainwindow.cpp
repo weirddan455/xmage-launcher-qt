@@ -102,3 +102,30 @@ void MainWindow::closeEvent(QCloseEvent *event)
     delete console;
     event->accept();
 }
+
+void MainWindow::on_actionQuit_triggered()
+{
+    this->close();
+}
+
+void MainWindow::on_actionForum_triggered()
+{
+    loadBrowser("https://www.slightlymagic.net/forum/viewforum.php?f=70");
+}
+
+void MainWindow::on_actionWebsite_triggered()
+{
+    loadBrowser("http://xmage.de/");
+}
+
+void MainWindow::loadBrowser(QString url)
+{
+    if (QDesktopServices::openUrl(QUrl(url)))
+    {
+        log("Loading " + url + " in default web browser");
+    }
+    else
+    {
+        log("Failed to open web browser for " + url);
+    }
+}
