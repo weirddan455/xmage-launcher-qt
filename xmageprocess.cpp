@@ -14,6 +14,5 @@ void XMageProcess::updateConsole()
 
 void XMageProcess::xmageQuit(int, QProcess::ExitStatus)
 {
-    console->appendPlainText("Process is quitting");
     this->deleteLater();
 }

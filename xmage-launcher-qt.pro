@@ -38,3 +38,4 @@ RESOURCES += \
     resources/resources.qrc
 
 unix|win32: LIBS += -lzip
+win32: LIBS += -lbz2 -llzma -lmsi

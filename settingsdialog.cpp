@@ -10,7 +10,8 @@ SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent) :
     ui->javaSelection->setText(settings->javaInstallLocation);
     QVector<JavaInfo> javaLocations = detectSystemJava();
     ui->javaTable->setRowCount(javaLocations.size());
-    ui->javaTable->setColumnWidth(2, 250);
+    ui->javaTable->setColumnWidth(1, 125);
+    ui->javaTable->setColumnWidth(2, 375);
     for (int i = 0; i < javaLocations.size(); i++)
     {
         QTableWidgetItem *version = new QTableWidgetItem(javaLocations.at(i).version);
@@ -38,62 +39,6 @@ void SettingsDialog::showJavaSettings()
 {
     ui->tabs->setCurrentWidget(ui->javaTab);
     show();
-}
-
-QVector<JavaInfo> SettingsDialog::detectSystemJava()
-{
-    QString linuxJavaHome("/usr/lib/jvm");
-    QDir dir(linuxJavaHome);
-    QStringList filter;
-    filter << "java*";
-    QStringList javaList = dir.entryList(filter, QDir::Dirs);
-    QVector<JavaInfo> javaLocations;
-    for (int i = 0; i < javaList.size(); i++)
-    {
-        QFileInfo javaExe(linuxJavaHome + '/' + javaList.at(i) + "/bin/java");
-        if (javaExe.exists())
-        {
-            JavaInfo java;
-            java.filePath = javaExe.filePath();
-            const QChar *stringData = javaList.at(i).constData();
-            int firstDashIndex = -1;
-            for (int j = 0; j < javaList.at(i).size(); j++)
-            {
-                if (stringData[j] == '-')
-                {
-                    firstDashIndex = j;
-                    break;
-                }
-            }
-            if (firstDashIndex != -1 && javaList.at(i).size() > firstDashIndex + 1)
-            {
-                java.version.append("Java ");
-                firstDashIndex++;
-                for (int j = firstDashIndex; j < javaList.at(i).size() && stringData[j] != '-'; j++)
-                {
-                    java.version.append(stringData[j]);
-                }
-            }
-            else
-            {
-                java.version.append("Unknown Java Version");
-            }
-            if (javaList.at(i).contains("openjdk", Qt::CaseInsensitive))
-            {
-                java.vendor.append("OpenJDK");
-            }
-            else if (javaList.at(i).contains("oracle", Qt::CaseInsensitive))
-            {
-                java.vendor.append("Oracle");
-            }
-            else
-            {
-                java.vendor.append("Unknown Java Vendor");
-            }
-            javaLocations.append(java);
-        }
-    }
-    return javaLocations;
 }
 
 void SettingsDialog::on_javaTable_cellClicked(int row, int column)
@@ -153,3 +98,123 @@ bool SettingsDialog::validateXmage()
     QMessageBox::warning(this, "Invalid XMage Path", dir.path() + " does not exist");
     return false;
 }
+
+#ifdef Q_OS_WINDOWS
+#include <windows.h>
+#include <msi.h>
+
+QVector<JavaInfo> SettingsDialog::detectSystemJava()
+{
+    QVector<JavaInfo> javaLocations;
+    char guid[39];
+    char buf[200];
+    DWORD index = 0;
+    UINT ret = MsiEnumProductsA(index, guid);
+    while (ret == ERROR_SUCCESS)
+    {
+        DWORD bufSize = 200;
+        if (MsiGetProductInfoA(guid, "InstalledProductName", buf, &bufSize) == ERROR_SUCCESS
+                && (strstr(buf, "Java") != NULL || strstr(buf, "JDK") != NULL))
+        {
+            bufSize = 200;
+            if (MsiGetProductInfoA(guid, "InstallLocation", buf, &bufSize) == ERROR_SUCCESS)
+            {
+                QString location(buf);
+                if (!location.isEmpty())
+                {
+                    QDir dir(location);
+                    if (dir.exists())
+                    {
+                        QFileInfo javaExe(dir.path() + "/bin/java.exe");
+                        if (javaExe.isExecutable())
+                        {
+                            JavaInfo java;
+                            java.filePath = javaExe.filePath();
+                            bufSize = 200;
+                            if (MsiGetProductInfoA(guid, "Publisher", buf, &bufSize) == ERROR_SUCCESS)
+                            {
+                                java.vendor = buf;
+                            }
+                            else
+                            {
+                                java.vendor = "Unknown Java Vendor";
+                            }
+                            bufSize = 200;
+                            if (MsiGetProductInfoA(guid, "VersionString", buf, &bufSize) == ERROR_SUCCESS)
+                            {
+                                java.version = buf;
+                            }
+                            else
+                            {
+                                java.version = "Unknown Java Version";
+                            }
+                            javaLocations.append(java);
+                        }
+                    }
+                }
+            }
+        }
+        ret = MsiEnumProductsA(++index, guid);
+    }
+    return javaLocations;
+}
+
+#else
+
+QVector<JavaInfo> SettingsDialog::detectSystemJava()
+{
+    QString linuxJavaHome("/usr/lib/jvm");
+    QDir dir(linuxJavaHome);
+    QStringList filter;
+    filter << "java*";
+    QStringList javaList = dir.entryList(filter, QDir::Dirs);
+    QVector<JavaInfo> javaLocations;
+    for (int i = 0; i < javaList.size(); i++)
+    {
+        QFileInfo javaExe(linuxJavaHome + '/' + javaList.at(i) + "/bin/java");
+        if (javaExe.isExecutable())
+        {
+            JavaInfo java;
+            java.filePath = javaExe.filePath();
+            const QChar *stringData = javaList.at(i).constData();
+            int firstDashIndex = -1;
+            for (int j = 0; j < javaList.at(i).size(); j++)
+            {
+                if (stringData[j] == '-')
+                {
+                    firstDashIndex = j;
+                    break;
+                }
+            }
+            if (firstDashIndex != -1 && javaList.at(i).size() > firstDashIndex + 1)
+            {
+                java.version.append("Java ");
+                firstDashIndex++;
+                for (int j = firstDashIndex; j < javaList.at(i).size() && stringData[j] != '-'; j++)
+                {
+                    java.version.append(stringData[j]);
+                }
+            }
+            else
+            {
+                java.version.append("Unknown Java Version");
+            }
+            if (javaList.at(i).contains("openjdk", Qt::CaseInsensitive))
+            {
+                java.vendor.append("OpenJDK");
+            }
+            else if (javaList.at(i).contains("oracle", Qt::CaseInsensitive))
+            {
+                java.vendor.append("Oracle");
+            }
+            else
+            {
+                java.vendor.append("Unknown Java Vendor");
+            }
+            javaLocations.append(java);
+        }
+    }
+    return javaLocations;
+}
+
+#endif

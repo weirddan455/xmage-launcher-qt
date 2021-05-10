@@ -97,8 +97,8 @@
       <rect>
        <x>10</x>
        <y>30</y>
-       <width>511</width>
-       <height>121</height>
+       <width>631</width>
+       <height>171</height>
       </rect>
      </property>
      <column>
@@ -122,7 +122,7 @@
       <rect>
        <x>10</x>
        <y>10</y>
-       <width>511</width>
+       <width>631</width>
        <height>20</height>
       </rect>
      </property>
