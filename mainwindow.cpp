@@ -8,7 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
     , background(new QLabel(this))
     , settings(new Settings)
     , settingsDialog(new SettingsDialog(settings, this))
-    , console(new Console(this))
+    , console(new QPlainTextEdit)
 {
     ui->setupUi(this);
     ui->progressBar->hide();
@@ -18,11 +18,15 @@ MainWindow::MainWindow(QWidget *parent)
     background->setGeometry(0, ui->menubar->size().height(), this->size().width(), this->size().height() - ui->menubar->size().height());
     background->setPixmap(backgroundImage.scaled(background->size()));
     background->lower();
+    console->setWindowTitle("XMage Console");
+    console->setWindowIcon(this->windowIcon());
+    console->setGeometry(0, 0, 860, 480);
+    console->setStyleSheet("background-color:black; color:white;");
+    console->setReadOnly(true);
 }
 
 MainWindow::~MainWindow()
 {
-    delete console;
     delete settingsDialog;
     delete settings;
     delete background;
@@ -58,9 +62,8 @@ void MainWindow::on_launchButton_clicked()
     QString clientLocation = settings->xmageInstallLocation + "/mage-client";
     QString clientJar = clientLocation + "/lib/mage-client-1.4.48.jar";
     console->show();
-    QProcess *process = new QProcess();
+    XMageProcess *process = new XMageProcess(console);
     process->setWorkingDirectory(clientLocation);
-    console->logProcess(process);
     QString program = settings->javaInstallLocation;
     QStringList arguments;
     arguments << "-jar" << clientJar;
@@ -92,4 +95,10 @@ void MainWindow::update_progress_bar(qint64 bytesReceived, qint64 bytesTotal)
 void MainWindow::on_actionSettings_triggered()
 {
     settingsDialog->show();
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    delete console;
+    event->accept();
 }

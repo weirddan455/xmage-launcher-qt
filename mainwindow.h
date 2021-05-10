@@ -2,16 +2,15 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QProcess>
 #include <QPlainTextEdit>
 #include <QRandomGenerator>
 #include <QLabel>
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QStandardPaths>
-#include "console.h"
 #include "settingsdialog.h"
 #include "settings.h"
+#include "xmageprocess.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -30,6 +29,9 @@ public slots:
     void log(QString message);
     void downloadComplete();
 
+protected:
+    void closeEvent(QCloseEvent *event) override;
+
 private slots:
     void on_launchButton_clicked();
     void on_downloadButton_clicked();
@@ -41,6 +43,6 @@ private:
     QLabel *background;
     Settings *settings;
     SettingsDialog *settingsDialog;
-    Console *console;
+    QPlainTextEdit *console;
 };
 #endif // MAINWINDOW_H

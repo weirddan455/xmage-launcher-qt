@@ -9,21 +9,21 @@ CONFIG += c++11
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    console.cpp \
     downloadmanager.cpp \
     main.cpp \
     mainwindow.cpp \
     settings.cpp \
     settingsdialog.cpp \
-    unzipthread.cpp
+    unzipthread.cpp \
+    xmageprocess.cpp
 
 HEADERS += \
-    console.h \
     downloadmanager.h \
     mainwindow.h \
     settings.h \
     settingsdialog.h \
-    unzipthread.h
+    unzipthread.h \
+    xmageprocess.h
 
 FORMS += \
     mainwindow.ui \
