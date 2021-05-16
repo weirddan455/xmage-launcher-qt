@@ -6,22 +6,45 @@ SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent) :
     ui(new Ui::SettingsDialog)
 {
     ui->setupUi(this);
-    ui->xmageSelection->setText(settings->xmageInstallLocation);
     ui->javaSelection->setText(settings->javaInstallLocation);
     QVector<JavaInfo> javaLocations = detectSystemJava();
-    ui->javaTable->setRowCount(javaLocations.size());
-    ui->javaTable->setColumnWidth(1, 125);
-    ui->javaTable->setColumnWidth(2, 375);
     for (int i = 0; i < javaLocations.size(); i++)
     {
-        QTableWidgetItem *version = new QTableWidgetItem(javaLocations.at(i).version);
-        ui->javaTable->setItem(i, 0, version);
-        QTableWidgetItem *vendor = new QTableWidgetItem(javaLocations.at(i).vendor);
-        ui->javaTable->setItem(i, 1, vendor);
-        QTableWidgetItem *filePath = new QTableWidgetItem(javaLocations.at(i).filePath);
-        ui->javaTable->setItem(i, 2, filePath);
+        const JavaInfo &javaInfo = javaLocations.at(i);
+        QTreeWidgetItem *item = new QTreeWidgetItem(ui->javaTree);
+        item->setText(0, javaInfo.version);
+        item->setText(1, javaInfo.vendor);
+        item->setText(2, javaInfo.filePath);
+    }
+    QMapIterator<QString, XMageVersion> xmageIterator(settings->xmageInstallations);
+    while (xmageIterator.hasNext())
+    {
+        xmageIterator.next();
+        QString xmageLocation = xmageIterator.key();
+        const XMageVersion &versionInfo = xmageIterator.value();
+        QTreeWidgetItem *item = new QTreeWidgetItem(ui->xmageTree);
+        switch (versionInfo.branch)
+        {
+            case STABLE:
+                item->setText(0, "Stable");
+                break;
+            case BETA:
+                item->setText(0, "Beta");
+                break;
+            default:
+                item->setText(0, "Unknown");
+                break;
+        }
+        item->setText(1, versionInfo.version);
+        item->setText(2, xmageLocation);
+        if (xmageLocation == settings->xmageInstallLocation)
+        {
+            item->setSelected(true);
+            selectedXmage = item;
+        }
     }
     this->settings = settings;
+    connect(this, &QDialog::finished, this, &QObject::deleteLater);
 }
 
 SettingsDialog::~SettingsDialog()
@@ -32,19 +55,21 @@ SettingsDialog::~SettingsDialog()
 void SettingsDialog::showXmageSettings()
 {
     ui->tabs->setCurrentWidget(ui->xmageTab);
-    show();
 }
 
 void SettingsDialog::showJavaSettings()
 {
     ui->tabs->setCurrentWidget(ui->javaTab);
-    show();
 }
 
-void SettingsDialog::on_javaTable_cellClicked(int row, int column)
+void SettingsDialog::on_javaTree_itemClicked(QTreeWidgetItem *item, int)
 {
-    (void)column;
-    ui->javaSelection->setText(ui->javaTable->item(row, 2)->text());
+    ui->javaSelection->setText(item->text(2));
+}
+
+void SettingsDialog::on_xmageTree_itemClicked(QTreeWidgetItem *item, int)
+{
+    selectedXmage = item;
 }
 
 void SettingsDialog::on_javaBrowse_clicked()
@@ -56,20 +81,62 @@ void SettingsDialog::on_javaBrowse_clicked()
     }
 }
 
-void SettingsDialog::on_xmageBrowse_clicked()
+void SettingsDialog::on_xmageAdd_clicked()
 {
     QString location = QFileDialog::getExistingDirectory(this, "Select XMage Install Location", QStandardPaths::writableLocation(QStandardPaths::HomeLocation), QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
-    if (!location.isEmpty())
+    if (validateXmage(location))
     {
-        ui->xmageSelection->setText(location);
+        QStringList branches;
+        branches << "Stable" << "Beta";
+        bool dialogAccepted;
+        QString selectedBranch = QInputDialog::getItem(this, "Select Branch", "XMage Branch", branches, 0, false, &dialogAccepted);
+        if (dialogAccepted)
+        {
+            QString userVersion = QInputDialog::getText(this, "Input Version Number", "Example: xmage_1.4.48V2 (may be left blank, needed for update check)", QLineEdit::Normal, QString(), &dialogAccepted);
+            if (dialogAccepted)
+            {
+                XMageVersion versionInfo;
+                versionInfo.version = userVersion;
+                if (selectedBranch == branches.at(1))
+                {
+                    versionInfo.branch = BETA;
+                }
+                else
+                {
+                    versionInfo.branch = STABLE;
+                }
+                settings->addXmageInstallation(location, versionInfo);
+                QTreeWidgetItem *item = new QTreeWidgetItem(ui->xmageTree);
+                item->setText(0, selectedBranch);
+                item->setText(1, versionInfo.version);
+                item->setText(2, location);
+            }
+        }
+    }
+}
+
+void SettingsDialog::on_xmageRemove_clicked()
+{
+    if (selectedXmage != nullptr)
+    {
+        settings->removeXmageInstallaion(selectedXmage->text(2));
+        delete selectedXmage;
+        selectedXmage = nullptr;
     }
 }
 
 void SettingsDialog::accept()
 {
-    if (validateXmage() && validateJava())
+    if (selectedXmage == nullptr)
     {
-        settings->setXmageInstallLocation(ui->xmageSelection->text());
+        showXmageSettings();
+        QMessageBox::warning(this, "No XMage Install", "Please select an XMage installation");
+        return;
+    }
+    QString xmageLocation = selectedXmage->text(2);
+    if (validateXmage(xmageLocation) && validateJava())
+    {
+        settings->setXmageInstallLocation(xmageLocation);
         settings->setJavaInstallLocation(ui->javaSelection->text());
         QDialog::accept();
     }
@@ -82,20 +149,19 @@ bool SettingsDialog::validateJava()
     {
         return true;
     }
-    ui->tabs->setCurrentWidget(ui->javaTab);
+    showJavaSettings();
     QMessageBox::warning(this, "Invalid Java", javaExe.filePath() + " is not a valid executable");
     return false;
 }
 
-bool SettingsDialog::validateXmage()
+bool SettingsDialog::validateXmage(QString location)
 {
-    QDir dir(ui->xmageSelection->text());
-    if (dir.exists())
+    if (!location.isEmpty() && (QDir(location + "/mage-client").exists() || QDir(location + "/mage-server").exists()))
     {
         return true;
     }
-    ui->tabs->setCurrentWidget(ui->xmageTab);
-    QMessageBox::warning(this, "Invalid XMage Path", dir.path() + " does not exist");
+    showXmageSettings();
+    QMessageBox::warning(this, "Invalid XMage Path", location + " is not a valid XMage installation");
     return false;
 }
 

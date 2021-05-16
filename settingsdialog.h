@@ -5,12 +5,13 @@
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QInputDialog>
 #include <QMessageBox>
 #include <QStandardPaths>
 #include <QString>
 #include <QStringList>
-#include <QTableWidget>
-#include <QTableWidgetItem>
+#include <QTreeWidget>
+#include <QTreeWidgetItem>
 #include <QVector>
 #include <settings.h>
 
@@ -39,15 +40,18 @@ public slots:
     void accept() override;
 
 private slots:
-    void on_javaTable_cellClicked(int row, int column);
-    void on_xmageBrowse_clicked();
+    void on_javaTree_itemClicked(QTreeWidgetItem *item, int);
+    void on_xmageTree_itemClicked(QTreeWidgetItem *item, int);
+    void on_xmageAdd_clicked();
+    void on_xmageRemove_clicked();
     void on_javaBrowse_clicked();
 
 private:
     Ui::SettingsDialog *ui;
     Settings *settings;
+    QTreeWidgetItem *selectedXmage = nullptr;
     QVector<JavaInfo> detectSystemJava();
-    bool validateXmage();
+    bool validateXmage(QString location);
     bool validateJava();
 };
 

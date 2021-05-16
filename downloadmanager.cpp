@@ -4,7 +4,6 @@ DownloadManager::DownloadManager(QString downloadLocation, MainWindow *mainWindo
     : QObject(mainWindow)
     , networkManager(new QNetworkAccessManager(this))
 {
-    connect(networkManager, &QNetworkAccessManager::finished, this, &DownloadManager::poll_github);
     this->downloadLocation = downloadLocation;
     this->mainWindow = mainWindow;
 }
@@ -14,73 +13,107 @@ DownloadManager::~DownloadManager()
     delete networkManager;
 }
 
-void DownloadManager::download()
+void DownloadManager::downloadStable()
 {
-    mainWindow->log("Polling GitHub for latest version...");
+    versionInfo.branch = STABLE;
+    connect(networkManager, &QNetworkAccessManager::finished, this, &DownloadManager::poll_github);
+    mainWindow->log("Polling GitHub for latest stable version...");
     QNetworkRequest request(QUrl("https://api.github.com/repos/magefree/mage/releases"));
+    networkManager->get(request);
+}
+
+void DownloadManager::downloadBeta()
+{
+    versionInfo.branch = BETA;
+    connect(networkManager, &QNetworkAccessManager::finished, this, &DownloadManager::poll_beta);
+    mainWindow->log("Polling xmage.today for latest beta version...");
+    QNetworkRequest request(QUrl("http://xmage.today/config.json"));
     networkManager->get(request);
 }
 
 void DownloadManager::poll_github(QNetworkReply *reply)
 {
-    bool fail = false;
     if (reply->error() != QNetworkReply::NoError)
     {
-        fail = true;
-        mainWindow->log("Network error: " + reply->errorString());
-        mainWindow->downloadComplete();
+        pollFailed(reply, "Network error: " + reply->errorString());
     }
     else
     {
         QJsonObject latestRelease = QJsonDocument::fromJson(reply->readAll()).array().first().toObject();
-        QString latestXmageVersion = latestRelease.value("name").toString();
         QUrl url(latestRelease.value("assets").toArray().first().toObject().value("browser_download_url").toString());
-        if (!url.isValid())
+        if (url.isValid())
         {
-            fail = true;
-            mainWindow->log("Error parsing JSON");
-            mainWindow->downloadComplete();
+            versionInfo.version = latestRelease.value("name").toString();
+            startDownload(url, reply);
         }
         else
         {
-            QString fileName;
-            if (!downloadLocation.isEmpty())
-            {
-                fileName.append(downloadLocation + '/');
-            }
-            if (!latestXmageVersion.isEmpty())
-            {
-                fileName.append(latestXmageVersion + ".zip");
-            }
-            else
-            {
-                fileName.append("xmage.zip");
-            }
-            saveFile = new QSaveFile(fileName);
-            if (!saveFile->open(QIODevice::WriteOnly))
-            {
-                fail = true;
-                mainWindow->log("Failed to create file " + saveFile->fileName());
-                mainWindow->downloadComplete();
-                delete saveFile;
-            }
-            else
-            {
-                mainWindow->log("Downloading XMage from " + url.toString());
-                networkManager->disconnect();
-                connect(networkManager, &QNetworkAccessManager::finished, this, &DownloadManager::download_complete);
-                QNetworkRequest request(url);
-                request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
-                downloadReply = networkManager->get(request);
-                connect(downloadReply, &QNetworkReply::downloadProgress, mainWindow, &MainWindow::update_progress_bar);
-                connect(downloadReply, &QNetworkReply::readyRead, this, &DownloadManager::save_data);
-            }
+            pollFailed(reply, "Error parsing JSON");
         }
     }
-    reply->deleteLater();
-    if (fail)
+}
+
+void DownloadManager::poll_beta(QNetworkReply *reply)
+{
+    if (reply->error() != QNetworkReply::NoError)
     {
-        this->deleteLater();
+        pollFailed(reply, "Network error: " + reply->errorString());
+    }
+    else
+    {
+        QJsonObject betaInfo = QJsonDocument::fromJson(reply->readAll()).object().value("XMage").toObject();
+        QUrl url(betaInfo.value("location").toString());
+        if (url.isValid())
+        {
+            versionInfo.version = betaInfo.value("version").toString();
+            startDownload(url, reply);
+        }
+        else
+        {
+            pollFailed(reply, "Error parsing JSON");
+        }
+    }
+}
+
+void DownloadManager::pollFailed(QNetworkReply *reply, QString errorMessage)
+{
+    mainWindow->download_fail(errorMessage);
+    reply->deleteLater();
+    this->deleteLater();
+}
+
+void DownloadManager::startDownload(QUrl url, QNetworkReply *reply)
+{
+    QString fileName;
+    if (!downloadLocation.isEmpty())
+    {
+        fileName.append(downloadLocation + '/');
+    }
+    if (!versionInfo.version.isEmpty())
+    {
+        fileName.append(versionInfo.version + ".zip");
+    }
+    else
+    {
+        fileName.append("xmage.zip");
+    }
+    saveFile = new QSaveFile(fileName);
+    if (!saveFile->open(QIODevice::WriteOnly))
+    {
+        pollFailed(reply, "Failed to create file " + saveFile->fileName());
+        delete saveFile;
+    }
+    else
+    {
+        mainWindow->log("Downloading XMage from " + url.toString());
+        networkManager->disconnect();
+        connect(networkManager, &QNetworkAccessManager::finished, this, &DownloadManager::download_complete);
+        QNetworkRequest request(url);
+        request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+        downloadReply = networkManager->get(request);
+        connect(downloadReply, &QNetworkReply::downloadProgress, mainWindow, &MainWindow::update_progress_bar);
+        connect(downloadReply, &QNetworkReply::readyRead, this, &DownloadManager::save_data);
+        reply->deleteLater();
     }
 }
 
@@ -88,8 +121,7 @@ void DownloadManager::save_data()
 {
     if (!saveFile->write(downloadReply->readAll()))
     {
-        mainWindow->log("Error writing to file " + saveFile->fileName());
-        mainWindow->downloadComplete();
+        mainWindow->download_fail("Error writing to file " + saveFile->fileName());
         delete saveFile;
         downloadReply->deleteLater();
         this->deleteLater();
@@ -98,12 +130,11 @@ void DownloadManager::save_data()
 
 void DownloadManager::download_complete(QNetworkReply *reply)
 {
-    bool fail = false;
+    QString errorMessage;
     QString fileName(saveFile->fileName());
     if (reply->error() != QNetworkReply::NoError)
     {
-        fail = true;
-        mainWindow->log("Network error: " + reply->errorString());
+        errorMessage = "Network error: " + reply->errorString();
     }
     else
     {
@@ -114,24 +145,24 @@ void DownloadManager::download_complete(QNetworkReply *reply)
         }
         else
         {
-            fail = true;
-            mainWindow->log("Error writing to file " + fileName);
+            errorMessage = "Error writing to file " + fileName;
         }
     }
     delete saveFile;
     reply->deleteLater();
     this->deleteLater();
-    if (!fail)
+    if (errorMessage.isEmpty())
     {
-        UnzipThread *unzip = new UnzipThread(fileName);
-        connect(unzip, &UnzipThread::finished, mainWindow, &MainWindow::downloadComplete);
-        connect(unzip, &UnzipThread::finished, unzip, &QObject::deleteLater);
+        UnzipThread *unzip = new UnzipThread(fileName, versionInfo);
         connect(unzip, &UnzipThread::log, mainWindow, &MainWindow::log);
         connect(unzip, &UnzipThread::progress, mainWindow, &MainWindow::update_progress_bar);
+        connect(unzip, &UnzipThread::unzip_fail, mainWindow, &MainWindow::download_fail);
+        connect(unzip, &UnzipThread::unzip_complete, mainWindow, &MainWindow::download_success);
+        connect(unzip, &UnzipThread::finished, unzip, &QObject::deleteLater);
         unzip->start();
     }
     else
     {
-        mainWindow->downloadComplete();
+        mainWindow->download_fail(errorMessage);
     }
 }

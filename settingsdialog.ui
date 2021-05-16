@@ -48,43 +48,71 @@
     <attribute name="title">
      <string>XMage</string>
     </attribute>
-    <widget class="QLineEdit" name="xmageSelection">
+    <widget class="QLabel" name="xmageTableLabel">
      <property name="geometry">
       <rect>
-       <x>20</x>
-       <y>40</y>
-       <width>231</width>
-       <height>22</height>
+       <x>10</x>
+       <y>10</y>
+       <width>631</width>
+       <height>20</height>
       </rect>
      </property>
+     <property name="text">
+      <string>Installed XMage Versions</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
     </widget>
-    <widget class="QPushButton" name="xmageBrowse">
+    <widget class="QTreeWidget" name="xmageTree">
      <property name="geometry">
       <rect>
-       <x>320</x>
-       <y>40</y>
+       <x>10</x>
+       <y>30</y>
+       <width>641</width>
+       <height>181</height>
+      </rect>
+     </property>
+     <column>
+      <property name="text">
+       <string>XMage Branch</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>XMage Version</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Path</string>
+      </property>
+     </column>
+    </widget>
+    <widget class="QPushButton" name="xmageAdd">
+     <property name="geometry">
+      <rect>
+       <x>40</x>
+       <y>220</y>
        <width>80</width>
        <height>22</height>
       </rect>
      </property>
      <property name="text">
-      <string>Browse</string>
+      <string>Add</string>
      </property>
     </widget>
-    <widget class="QLabel" name="xmageLabel">
+    <widget class="QPushButton" name="xmageRemove">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>10</y>
-       <width>231</width>
-       <height>20</height>
+       <x>520</x>
+       <y>220</y>
+       <width>80</width>
+       <height>22</height>
       </rect>
      </property>
      <property name="text">
-      <string>Install Location</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <string>Remove</string>
      </property>
     </widget>
    </widget>
@@ -92,31 +120,6 @@
     <attribute name="title">
      <string>Java</string>
     </attribute>
-    <widget class="QTableWidget" name="javaTable">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>30</y>
-       <width>631</width>
-       <height>171</height>
-      </rect>
-     </property>
-     <column>
-      <property name="text">
-       <string>Java Version</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Java Vendor</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>File Path</string>
-      </property>
-     </column>
-    </widget>
     <widget class="QLabel" name="javaTableLabel">
      <property name="geometry">
       <rect>
@@ -137,7 +140,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>230</y>
+       <y>260</y>
        <width>331</width>
        <height>22</height>
       </rect>
@@ -147,7 +150,7 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>210</y>
+       <y>240</y>
        <width>321</width>
        <height>20</height>
       </rect>
@@ -163,7 +166,7 @@
      <property name="geometry">
       <rect>
        <x>370</x>
-       <y>230</y>
+       <y>260</y>
        <width>80</width>
        <height>22</height>
       </rect>
@@ -171,6 +174,31 @@
      <property name="text">
       <string>Browse</string>
      </property>
+    </widget>
+    <widget class="QTreeWidget" name="javaTree">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>641</width>
+       <height>181</height>
+      </rect>
+     </property>
+     <column>
+      <property name="text">
+       <string>Java Version</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Java Vendor</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Path</string>
+      </property>
+     </column>
     </widget>
    </widget>
   </widget>

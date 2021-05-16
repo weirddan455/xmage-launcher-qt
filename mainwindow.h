@@ -7,6 +7,7 @@
 #include <QLabel>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QInputDialog>
 #include <QStandardPaths>
 #include <QDesktopServices>
 #include "settingsdialog.h"
@@ -28,7 +29,8 @@ public:
 public slots:
     void update_progress_bar(qint64 bytesReceived, qint64 bytesTotal);
     void log(QString message);
-    void downloadComplete();
+    void download_fail(QString errorMessage);
+    void download_success(QString installLocation, XMageVersion versionInfo);
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -46,7 +48,6 @@ private:
     Ui::MainWindow *ui;
     QLabel *background;
     Settings *settings;
-    SettingsDialog *settingsDialog;
     QPlainTextEdit *console;
     void loadBrowser(QString url);
 };

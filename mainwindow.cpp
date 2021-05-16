@@ -7,7 +7,6 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , background(new QLabel(this))
     , settings(new Settings)
-    , settingsDialog(new SettingsDialog(settings, this))
     , console(new QPlainTextEdit)
 {
     ui->setupUi(this);
@@ -27,7 +26,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    delete settingsDialog;
     delete settings;
     delete background;
     delete ui;
@@ -38,8 +36,18 @@ void MainWindow::log(QString message)
     ui->log->appendPlainText(message);
 }
 
-void MainWindow::downloadComplete()
+void MainWindow::download_fail(QString errorMessage)
 {
+    log(errorMessage);
+    ui->progressBar->hide();
+    ui->progressBar->setValue(0);
+    ui->downloadButton->setEnabled(true);
+}
+
+void MainWindow::download_success(QString installLocation, XMageVersion versionInfo)
+{
+    settings->setXmageInstallLocation(installLocation);
+    settings->addXmageInstallation(installLocation, versionInfo);
     ui->progressBar->hide();
     ui->progressBar->setValue(0);
     ui->downloadButton->setEnabled(true);
@@ -50,13 +58,17 @@ void MainWindow::on_launchButton_clicked()
     if (settings->xmageInstallLocation.isEmpty())
     {
         QMessageBox::warning(this, "XMage location not set", "Please set XMage location in settings.");
+        SettingsDialog *settingsDialog = new SettingsDialog(settings, this);
         settingsDialog->showXmageSettings();
+        settingsDialog->open();
         return;
     }
     if (settings->javaInstallLocation.isEmpty())
     {
         QMessageBox::warning(this, "Java location not set", "Please set Java location in settings");
+        SettingsDialog *settingsDialog = new SettingsDialog(settings, this);
         settingsDialog->showJavaSettings();
+        settingsDialog->open();
         return;
     }
     QString clientLocation = settings->xmageInstallLocation + "/mage-client";
@@ -72,13 +84,27 @@ void MainWindow::on_launchButton_clicked()
 
 void MainWindow::on_downloadButton_clicked()
 {
-    QString downloadLocation = QFileDialog::getExistingDirectory(this, "Select location to install XMage", QStandardPaths::writableLocation(QStandardPaths::HomeLocation), QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
-    if (!downloadLocation.isEmpty())
+    QStringList branches;
+    branches << "Stable" << "Beta";
+    bool dialogAccepted;
+    QString selectedBranch = QInputDialog::getItem(this, "Select Branch", "XMage Branch", branches, 0, false, &dialogAccepted);
+    if (dialogAccepted)
     {
-        ui->downloadButton->setEnabled(false);
-        ui->progressBar->show();
-        DownloadManager *downloadManager = new DownloadManager(downloadLocation, this);
-        downloadManager->download();
+        QString downloadLocation = QFileDialog::getExistingDirectory(this, "Select location to install XMage", QStandardPaths::writableLocation(QStandardPaths::HomeLocation), QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+        if (!downloadLocation.isEmpty())
+        {
+            ui->downloadButton->setEnabled(false);
+            ui->progressBar->show();
+            DownloadManager *downloadManager = new DownloadManager(downloadLocation, this);
+            if (selectedBranch == branches.at(1))
+            {
+                downloadManager->downloadBeta();
+            }
+            else
+            {
+                downloadManager->downloadStable();
+            }
+        }
     }
 }
 
@@ -94,7 +120,8 @@ void MainWindow::update_progress_bar(qint64 bytesReceived, qint64 bytesTotal)
 
 void MainWindow::on_actionSettings_triggered()
 {
-    settingsDialog->show();
+    SettingsDialog *settingsDialog = new SettingsDialog(settings, this);
+    settingsDialog->open();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
