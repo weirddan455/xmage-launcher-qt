@@ -96,7 +96,14 @@ void SettingsDialog::on_xmageAdd_clicked()
             if (dialogAccepted)
             {
                 XMageVersion versionInfo;
-                versionInfo.version = userVersion;
+                if (userVersion.isEmpty())
+                {
+                    versionInfo.version = "Unknown";
+                }
+                else
+                {
+                    versionInfo.version = userVersion;
+                }
                 if (selectedBranch == branches.at(1))
                 {
                     versionInfo.branch = BETA;

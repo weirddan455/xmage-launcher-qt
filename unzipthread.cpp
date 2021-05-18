@@ -1,14 +1,14 @@
 #include "unzipthread.h"
 
-UnzipThread::UnzipThread(QString fileName, XMageVersion versionInfo)
+UnzipThread::UnzipThread(QString fileName, XMageVersion versionInfo, bool update)
 {
     this->fileName = fileName;
     this->versionInfo = versionInfo;
+    this->update = update;
 }
 
 void UnzipThread::run()
 {
-    emit log("Unzipping file " + fileName);
     int error = 0;
     zip_t *zip = zip_open(fileName.toLocal8Bit(), ZIP_RDONLY, &error);
     if (error != 0)
@@ -20,6 +20,15 @@ void UnzipThread::run()
     char buf[UNZIP_BUFFER_SIZE];
     QString outDir(fileName);
     outDir.truncate(outDir.lastIndexOf('/') + 1);
+    if (update)
+    {
+        emit log("Update: removing old jar and db files...");
+        QDir(outDir + "mage-client/lib").removeRecursively();
+        QDir(outDir + "mage-client/db").removeRecursively();
+        QDir(outDir + "mage-server/lib").removeRecursively();
+        QDir(outDir + "mage-server/db").removeRecursively();
+    }
+    emit log("Unzipping file " + fileName);
     zip_int64_t numEntries = zip_get_num_entries(zip, 0);
     for (zip_int64_t i = 0; i < numEntries; i++)
     {

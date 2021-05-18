@@ -9,7 +9,15 @@ Settings::Settings()
         QJsonObject jsonObject = jsonArray.at(i).toObject();
         QString location = jsonObject.value("installLocation").toString();
         XMageVersion versionInfo;
-        versionInfo.version = jsonObject.value("version").toString();
+        QString savedVersion = jsonObject.value("version").toString();
+        if (savedVersion.isEmpty())
+        {
+            versionInfo.version = "Unknown";
+        }
+        else
+        {
+            versionInfo.version = savedVersion;
+        }
         QString branch = jsonObject.value("branch").toString();
         if (branch == "stable")
         {

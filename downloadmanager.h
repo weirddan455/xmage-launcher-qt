@@ -21,10 +21,13 @@ public:
     ~DownloadManager();
     void downloadStable();
     void downloadBeta();
+    void updateXmage(XMageVersion versionInfo);
 
 private:
+    bool update = false;
     QString downloadLocation;
-    XMageVersion versionInfo;
+    XMageVersion currentVersion;
+    XMageVersion newVersion;
     MainWindow *mainWindow;
     QNetworkAccessManager *networkManager;
     QNetworkReply *downloadReply;

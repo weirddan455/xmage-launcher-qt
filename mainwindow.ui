@@ -18,25 +18,31 @@
     <normaloff>:/icon-mage.png</normaloff>:/icon-mage.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QPushButton" name="testButton">
+   <widget class="QPushButton" name="updateButton">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
-      <x>480</x>
-      <y>580</y>
-      <width>101</width>
+      <x>450</x>
+      <y>570</y>
+      <width>111</width>
       <height>41</height>
      </rect>
     </property>
     <property name="text">
-     <string>Test</string>
+     <string>Check Updates</string>
     </property>
    </widget>
    <widget class="QPushButton" name="launchButton">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
-      <x>150</x>
+      <x>40</x>
       <y>570</y>
-      <width>101</width>
+      <width>111</width>
       <height>41</height>
      </rect>
     </property>
@@ -86,7 +92,7 @@ color: white;</string>
     </property>
     <property name="geometry">
      <rect>
-      <x>830</x>
+      <x>850</x>
       <y>570</y>
       <width>111</width>
       <height>41</height>

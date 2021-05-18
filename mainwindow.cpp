@@ -42,6 +42,7 @@ void MainWindow::download_fail(QString errorMessage)
     ui->progressBar->hide();
     ui->progressBar->setValue(0);
     ui->downloadButton->setEnabled(true);
+    ui->updateButton->setEnabled(true);
 }
 
 void MainWindow::download_success(QString installLocation, XMageVersion versionInfo)
@@ -51,6 +52,54 @@ void MainWindow::download_success(QString installLocation, XMageVersion versionI
     ui->progressBar->hide();
     ui->progressBar->setValue(0);
     ui->downloadButton->setEnabled(true);
+    ui->updateButton->setEnabled(true);
+}
+
+void MainWindow::on_updateButton_clicked()
+{
+    if (settings->xmageInstallLocation.isEmpty())
+    {
+        QMessageBox::warning(this, "XMage location not set", "Please set XMage location in settings.");
+        SettingsDialog *settingsDialog = new SettingsDialog(settings, this);
+        settingsDialog->showXmageSettings();
+        settingsDialog->open();
+    }
+    else
+    {
+        XMageVersion versionInfo;
+        versionInfo.version = "Unknown";
+        versionInfo.branch = UNKNOWN;
+        if (settings->xmageInstallations.contains(settings->xmageInstallLocation))
+        {
+            versionInfo = settings->xmageInstallations.value(settings->xmageInstallLocation);
+        }
+        if (versionInfo.branch == UNKNOWN)
+        {
+            QStringList branches;
+            branches << "Stable" << "Beta";
+            bool dialogAccepted;
+            QString selectedBranch = QInputDialog::getItem(this, "Select Branch", "XMage Branch", branches, 0, false, &dialogAccepted);
+            if (dialogAccepted)
+            {
+                if (selectedBranch == branches.at(1))
+                {
+                    versionInfo.branch = BETA;
+                }
+                else
+                {
+                    versionInfo.branch = STABLE;
+                }
+            }
+        }
+        if (versionInfo.branch != UNKNOWN)
+        {
+            ui->downloadButton->setEnabled(false);
+            ui->updateButton->setEnabled(false);
+            ui->progressBar->show();
+            DownloadManager *downloadManager = new DownloadManager(settings->xmageInstallLocation, this);
+            downloadManager->updateXmage(versionInfo);
+        }
+    }
 }
 
 void MainWindow::on_launchButton_clicked()
@@ -61,25 +110,26 @@ void MainWindow::on_launchButton_clicked()
         SettingsDialog *settingsDialog = new SettingsDialog(settings, this);
         settingsDialog->showXmageSettings();
         settingsDialog->open();
-        return;
     }
-    if (settings->javaInstallLocation.isEmpty())
+    else if (settings->javaInstallLocation.isEmpty())
     {
         QMessageBox::warning(this, "Java location not set", "Please set Java location in settings");
         SettingsDialog *settingsDialog = new SettingsDialog(settings, this);
         settingsDialog->showJavaSettings();
         settingsDialog->open();
-        return;
     }
-    QString clientLocation = settings->xmageInstallLocation + "/mage-client";
-    QString clientJar = clientLocation + "/lib/mage-client-1.4.48.jar";
-    console->show();
-    XMageProcess *process = new XMageProcess(console);
-    process->setWorkingDirectory(clientLocation);
-    QString program = settings->javaInstallLocation;
-    QStringList arguments;
-    arguments << "-jar" << clientJar;
-    process->start(program, arguments);
+    else
+    {
+        QString clientLocation = settings->xmageInstallLocation + "/mage-client";
+        QString clientJar = clientLocation + "/lib/mage-client-1.4.48.jar";
+        console->show();
+        XMageProcess *process = new XMageProcess(console);
+        process->setWorkingDirectory(clientLocation);
+        QString program = settings->javaInstallLocation;
+        QStringList arguments;
+        arguments << "-jar" << clientJar;
+        process->start(program, arguments);
+    }
 }
 
 void MainWindow::on_downloadButton_clicked()
@@ -106,10 +156,6 @@ void MainWindow::on_downloadButton_clicked()
             }
         }
     }
-}
-
-void MainWindow::on_testButton_clicked()
-{
 }
 
 void MainWindow::update_progress_bar(qint64 bytesReceived, qint64 bytesTotal)

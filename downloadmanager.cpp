@@ -15,7 +15,7 @@ DownloadManager::~DownloadManager()
 
 void DownloadManager::downloadStable()
 {
-    versionInfo.branch = STABLE;
+    newVersion.branch = STABLE;
     connect(networkManager, &QNetworkAccessManager::finished, this, &DownloadManager::poll_github);
     mainWindow->log("Polling GitHub for latest stable version...");
     QNetworkRequest request(QUrl("https://api.github.com/repos/magefree/mage/releases"));
@@ -24,11 +24,30 @@ void DownloadManager::downloadStable()
 
 void DownloadManager::downloadBeta()
 {
-    versionInfo.branch = BETA;
+    newVersion.branch = BETA;
     connect(networkManager, &QNetworkAccessManager::finished, this, &DownloadManager::poll_beta);
     mainWindow->log("Polling xmage.today for latest beta version...");
     QNetworkRequest request(QUrl("http://xmage.today/config.json"));
     networkManager->get(request);
+}
+
+void DownloadManager::updateXmage(XMageVersion versionInfo)
+{
+    this->currentVersion = versionInfo;
+    this->update = true;
+    if (versionInfo.branch == STABLE)
+    {
+        downloadStable();
+    }
+    else if (versionInfo.branch == BETA)
+    {
+        downloadBeta();
+    }
+    else
+    {
+        mainWindow->download_fail("Unknown branch. Aborting update.");
+        this->deleteLater();
+    }
 }
 
 void DownloadManager::poll_github(QNetworkReply *reply)
@@ -43,7 +62,7 @@ void DownloadManager::poll_github(QNetworkReply *reply)
         QUrl url(latestRelease.value("assets").toArray().first().toObject().value("browser_download_url").toString());
         if (url.isValid())
         {
-            versionInfo.version = latestRelease.value("name").toString();
+            newVersion.version = latestRelease.value("name").toString();
             startDownload(url, reply);
         }
         else
@@ -65,7 +84,7 @@ void DownloadManager::poll_beta(QNetworkReply *reply)
         QUrl url(betaInfo.value("location").toString());
         if (url.isValid())
         {
-            versionInfo.version = betaInfo.value("version").toString();
+            newVersion.version = betaInfo.value("version").toString();
             startDownload(url, reply);
         }
         else
@@ -84,19 +103,31 @@ void DownloadManager::pollFailed(QNetworkReply *reply, QString errorMessage)
 
 void DownloadManager::startDownload(QUrl url, QNetworkReply *reply)
 {
+    if (newVersion.version.isEmpty())
+    {
+        newVersion.version = "Unknown";
+    }
+    if (update)
+    {
+        if (newVersion.version == currentVersion.version && newVersion.version != "Unknown")
+        {
+            QMessageBox::information(mainWindow, "Up to date", "XMage is already on the latest version");
+            pollFailed(reply, "XMage is already up to date on version " + currentVersion.version);
+            return;
+        }
+        QString message = "Current version: " + currentVersion.version + "\nLatest Version: " + newVersion.version + "\nWould you like to update?";
+        if (QMessageBox::question(mainWindow, "Update XMage?", message) != QMessageBox::Yes)
+        {
+            pollFailed(reply, "User declined update");
+            return;
+        }
+    }
     QString fileName;
     if (!downloadLocation.isEmpty())
     {
         fileName.append(downloadLocation + '/');
     }
-    if (!versionInfo.version.isEmpty())
-    {
-        fileName.append(versionInfo.version + ".zip");
-    }
-    else
-    {
-        fileName.append("xmage.zip");
-    }
+    fileName.append(newVersion.version + ".zip");
     saveFile = new QSaveFile(fileName);
     if (!saveFile->open(QIODevice::WriteOnly))
     {
@@ -153,7 +184,7 @@ void DownloadManager::download_complete(QNetworkReply *reply)
     this->deleteLater();
     if (errorMessage.isEmpty())
     {
-        UnzipThread *unzip = new UnzipThread(fileName, versionInfo);
+        UnzipThread *unzip = new UnzipThread(fileName, newVersion, update);
         connect(unzip, &UnzipThread::log, mainWindow, &MainWindow::log);
         connect(unzip, &UnzipThread::progress, mainWindow, &MainWindow::update_progress_bar);
         connect(unzip, &UnzipThread::unzip_fail, mainWindow, &MainWindow::download_fail);

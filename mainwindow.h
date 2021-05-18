@@ -36,9 +36,9 @@ protected:
     void closeEvent(QCloseEvent *event) override;
 
 private slots:
+    void on_updateButton_clicked();
     void on_launchButton_clicked();
     void on_downloadButton_clicked();
-    void on_testButton_clicked();
     void on_actionSettings_triggered();
     void on_actionQuit_triggered();
     void on_actionForum_triggered();

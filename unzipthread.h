@@ -14,12 +14,13 @@ class UnzipThread : public QThread
 {
     Q_OBJECT
 public:
-    UnzipThread(QString fileName, XMageVersion versionInfo);
+    UnzipThread(QString fileName, XMageVersion versionInfo, bool update);
     void run() override;
 
 private:
     QString fileName;
     XMageVersion versionInfo;
+    bool update;
 
 signals:
     void log(QString message);
