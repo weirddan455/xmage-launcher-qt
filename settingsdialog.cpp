@@ -7,6 +7,8 @@ SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent) :
 {
     ui->setupUi(this);
     ui->javaSelection->setText(settings->javaInstallLocation);
+    ui->clientOptions->setText(settings->currentClientOptions.join(' '));
+    ui->serverOptions->setText(settings->currentServerOptions.join(' '));
     QVector<JavaInfo> javaLocations = detectSystemJava();
     for (int i = 0; i < javaLocations.size(); i++)
     {
@@ -132,6 +134,12 @@ void SettingsDialog::on_xmageRemove_clicked()
     }
 }
 
+void SettingsDialog::on_resetButton_clicked()
+{
+    ui->clientOptions->setText(settings->defaultClientOptions.join(' '));
+    ui->serverOptions->setText(settings->defaultServerOptions.join(' '));
+}
+
 void SettingsDialog::accept()
 {
     if (selectedXmage == nullptr)
@@ -145,6 +153,8 @@ void SettingsDialog::accept()
     {
         settings->setXmageInstallLocation(xmageLocation);
         settings->setJavaInstallLocation(ui->javaSelection->text());
+        settings->setClientOptions(ui->clientOptions->text());
+        settings->setServerOptions(ui->serverOptions->text());
         QDialog::accept();
     }
 }

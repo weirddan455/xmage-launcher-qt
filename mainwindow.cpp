@@ -121,14 +121,24 @@ void MainWindow::on_launchButton_clicked()
     else
     {
         QString clientLocation = settings->xmageInstallLocation + "/mage-client";
-        QString clientJar = clientLocation + "/lib/mage-client-1.4.48.jar";
-        console->show();
-        XMageProcess *process = new XMageProcess(console);
-        process->setWorkingDirectory(clientLocation);
-        QString program = settings->javaInstallLocation;
-        QStringList arguments;
-        arguments << "-jar" << clientJar;
-        process->start(program, arguments);
+        QDir clientLibDir(clientLocation + "/lib");
+        QStringList filter;
+        filter << "mage-client*.jar";
+        QFileInfoList infoList = clientLibDir.entryInfoList(filter, QDir::Files);
+        if (infoList.isEmpty())
+        {
+            log("Unable to find client jar file");
+        }
+        else
+        {
+            console->show();
+            XMageProcess *process = new XMageProcess(console);
+            process->setWorkingDirectory(clientLocation);
+            QString program = settings->javaInstallLocation;
+            QStringList arguments = settings->currentClientOptions;
+            arguments << "-jar" << infoList.at(0).absoluteFilePath();
+            process->start(program, arguments);
+        }
     }
 }
 

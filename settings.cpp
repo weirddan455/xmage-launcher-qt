@@ -33,6 +33,25 @@ Settings::Settings()
         }
         xmageInstallations.insert(location, versionInfo);
     }
+
+    defaultClientOptions << "-Xms256m" << "-Xmx512m" << "-Dfile.encoding=UTF-8";
+    defaultServerOptions << "-Xms256m" << "-Xmx1g" << "-Dfile.encoding=UTF-8";
+    if (diskSettings.contains("clientOptions"))
+    {
+        currentClientOptions = diskSettings.value("clientOptions").toStringList();
+    }
+    else
+    {
+        currentClientOptions = defaultClientOptions;
+    }
+    if (diskSettings.contains("serverOptions"))
+    {
+        currentServerOptions = diskSettings.value("serverOptions").toStringList();
+    }
+    else
+    {
+        currentServerOptions = defaultServerOptions;
+    }
 }
 
 void Settings::addXmageInstallation(QString location, XMageVersion &versionInfo)
@@ -87,4 +106,36 @@ void Settings::saveXmageInstallation()
         jsonArray.append(jsonObject);
     }
     diskSettings.setValue("xmageInstallations", jsonArray);
+}
+
+void Settings::setClientOptions(QString options)
+{
+    currentClientOptions = stringToList(options);
+    diskSettings.setValue("clientOptions", currentClientOptions);
+}
+
+void Settings::setServerOptions(QString options)
+{
+    currentServerOptions = stringToList(options);
+    diskSettings.setValue("serverOptions", currentServerOptions);
+}
+
+QStringList Settings::stringToList(QString str)
+{
+    QStringList list;
+    const QChar *data = str.constData();
+    for (int i = 0; i < str.size(); i++)
+    {
+        QString item;
+        while (i < str.size() && data[i] != ' ')
+        {
+            item.append(data[i]);
+            i++;
+        }
+        if (!item.isEmpty())
+        {
+            list.append(item);
+        }
+    }
+    return list;
 }

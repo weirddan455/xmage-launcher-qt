@@ -45,6 +45,7 @@ private slots:
     void on_xmageAdd_clicked();
     void on_xmageRemove_clicked();
     void on_javaBrowse_clicked();
+    void on_resetButton_clicked();
 
 private:
     Ui::SettingsDialog *ui;

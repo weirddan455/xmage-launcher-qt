@@ -14,8 +14,10 @@ private:
     QPlainTextEdit *console;
 
 private slots:
-    void updateConsole();
-    void xmageQuit(int, QProcess::ExitStatus);
+    void standard_read();
+    void error_read();
+    void process_error();
+    void xmage_quit(int, QProcess::ExitStatus);
 };
 
 #endif // XMAGEPROCESS_H
