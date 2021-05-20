@@ -24,7 +24,7 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>450</x>
+      <x>650</x>
       <y>570</y>
       <width>111</width>
       <height>41</height>
@@ -34,7 +34,7 @@
      <string>Check Updates</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="launchButton">
+   <widget class="QPushButton" name="clientButton">
     <property name="enabled">
      <bool>true</bool>
     </property>
@@ -47,7 +47,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Launch</string>
+     <string>Launch Client</string>
     </property>
    </widget>
    <widget class="QLabel" name="logo">
@@ -119,6 +119,33 @@ color: white;</string>
     </property>
     <property name="textVisible">
      <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="serverButton">
+    <property name="geometry">
+     <rect>
+      <x>200</x>
+      <y>570</y>
+      <width>111</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Launch Server</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="clientServerButton">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>570</y>
+      <width>111</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Launch Client
+and Server</string>
     </property>
    </widget>
   </widget>

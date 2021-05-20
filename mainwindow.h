@@ -37,18 +37,29 @@ protected:
 
 private slots:
     void on_updateButton_clicked();
-    void on_launchButton_clicked();
+    void on_clientButton_clicked();
+    void on_clientServerButton_clicked();
+    void on_serverButton_clicked();
     void on_downloadButton_clicked();
     void on_actionSettings_triggered();
     void on_actionQuit_triggered();
     void on_actionForum_triggered();
     void on_actionWebsite_triggered();
+    void on_server_quit();
 
 private:
     Ui::MainWindow *ui;
     QLabel *background;
     Settings *settings;
-    QPlainTextEdit *console;
+    QPlainTextEdit *clientConsole;
+    QPlainTextEdit *serverConsole;
+    XMageProcess *serverProcess = nullptr;
+
     void loadBrowser(QString url);
+    bool validateJavaSettings();
+    bool findClientJar(QString *jar);
+    bool findServerJar(QString *jar);
+    void launchClient();
+    void launchServer();
 };
 #endif // MAINWINDOW_H

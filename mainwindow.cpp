@@ -7,7 +7,8 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , background(new QLabel(this))
     , settings(new Settings)
-    , console(new QPlainTextEdit)
+    , clientConsole(new QPlainTextEdit)
+    , serverConsole(new QPlainTextEdit)
 {
     ui->setupUi(this);
     ui->progressBar->hide();
@@ -17,11 +18,16 @@ MainWindow::MainWindow(QWidget *parent)
     background->setGeometry(0, ui->menubar->size().height(), this->size().width(), this->size().height() - ui->menubar->size().height());
     background->setPixmap(backgroundImage.scaled(background->size()));
     background->lower();
-    console->setWindowTitle("XMage Console");
-    console->setWindowIcon(this->windowIcon());
-    console->setGeometry(0, 0, 860, 480);
-    console->setStyleSheet("background-color:black; color:white;");
-    console->setReadOnly(true);
+    clientConsole->setWindowTitle("XMage Client Console");
+    clientConsole->setWindowIcon(this->windowIcon());
+    clientConsole->setGeometry(0, 0, 860, 480);
+    clientConsole->setStyleSheet("background-color:black; color:white;");
+    clientConsole->setReadOnly(true);
+    serverConsole->setWindowTitle("XMage Server Console");
+    serverConsole->setWindowIcon(this->windowIcon());
+    serverConsole->setGeometry(0, 0, 860, 480);
+    serverConsole->setStyleSheet("background-color:black; color:white;");
+    serverConsole->setReadOnly(true);
 }
 
 MainWindow::~MainWindow()
@@ -102,44 +108,27 @@ void MainWindow::on_updateButton_clicked()
     }
 }
 
-void MainWindow::on_launchButton_clicked()
+void MainWindow::on_clientButton_clicked()
 {
-    if (settings->xmageInstallLocation.isEmpty())
+    launchClient();
+}
+
+void MainWindow::on_serverButton_clicked()
+{
+    if (serverProcess == nullptr)
     {
-        QMessageBox::warning(this, "XMage location not set", "Please set XMage location in settings.");
-        SettingsDialog *settingsDialog = new SettingsDialog(settings, this);
-        settingsDialog->showXmageSettings();
-        settingsDialog->open();
-    }
-    else if (settings->javaInstallLocation.isEmpty())
-    {
-        QMessageBox::warning(this, "Java location not set", "Please set Java location in settings");
-        SettingsDialog *settingsDialog = new SettingsDialog(settings, this);
-        settingsDialog->showJavaSettings();
-        settingsDialog->open();
+        launchServer();
     }
     else
     {
-        QString clientLocation = settings->xmageInstallLocation + "/mage-client";
-        QDir clientLibDir(clientLocation + "/lib");
-        QStringList filter;
-        filter << "mage-client*.jar";
-        QFileInfoList infoList = clientLibDir.entryInfoList(filter, QDir::Files);
-        if (infoList.isEmpty())
-        {
-            log("Unable to find client jar file");
-        }
-        else
-        {
-            console->show();
-            XMageProcess *process = new XMageProcess(console);
-            process->setWorkingDirectory(clientLocation);
-            QString program = settings->javaInstallLocation;
-            QStringList arguments = settings->currentClientOptions;
-            arguments << "-jar" << infoList.at(0).absoluteFilePath();
-            process->start(program, arguments);
-        }
+        serverProcess->terminate();
     }
+}
+
+void MainWindow::on_clientServerButton_clicked()
+{
+    launchServer();
+    launchClient();
 }
 
 void MainWindow::on_downloadButton_clicked()
@@ -182,7 +171,12 @@ void MainWindow::on_actionSettings_triggered()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    delete console;
+    if (serverProcess != nullptr && QMessageBox::question(this, "XMage Server Running", "XMage server is still running. Would you like to close it? If not, it will need to be closed manually.") == QMessageBox::Yes)
+    {
+        serverProcess->terminate();
+    }
+    delete clientConsole;
+    delete serverConsole;
     event->accept();
 }
 
@@ -211,4 +205,92 @@ void MainWindow::loadBrowser(QString url)
     {
         log("Failed to open web browser for " + url);
     }
+}
+
+void MainWindow::on_server_quit()
+{
+    serverProcess = nullptr;
+    ui->serverButton->setText("Launch Server");
+    ui->clientServerButton->setEnabled(true);
+}
+
+void MainWindow::launchClient()
+{
+    QString clientJar;
+    if (validateJavaSettings() && findClientJar(&clientJar))
+    {
+        clientConsole->show();
+        XMageProcess *process = new XMageProcess(clientConsole);
+        process->setWorkingDirectory(settings->xmageInstallLocation + "/mage-client");
+        QStringList arguments = settings->currentClientOptions;
+        arguments << "-jar" << clientJar;
+        process->start(settings->javaInstallLocation, arguments);
+    }
+}
+
+void MainWindow::launchServer()
+{
+    QString serverJar;
+    if (serverProcess == nullptr && validateJavaSettings() && findServerJar(&serverJar))
+    {
+        ui->serverButton->setText("Stop Server");
+        ui->clientServerButton->setEnabled(false);
+        serverConsole->show();
+        serverProcess = new XMageProcess(serverConsole);
+        connect(serverProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &MainWindow::on_server_quit);
+        serverProcess->setWorkingDirectory(settings->xmageInstallLocation + "/mage-server");
+        QStringList arguments = settings->currentServerOptions;
+        arguments << "-jar" << serverJar;
+        serverProcess->start(settings->javaInstallLocation, arguments);
+    }
+}
+
+bool MainWindow::validateJavaSettings()
+{
+    QFileInfo java(settings->javaInstallLocation);
+    if (java.isExecutable())
+    {
+        return true;
+    }
+    QMessageBox::warning(this, "Invalid Java Configuration", "Invalid Java configuration. Please set Java location in settings.");
+    SettingsDialog *settingsDialog = new SettingsDialog(settings, this);
+    settingsDialog->showJavaSettings();
+    settingsDialog->open();
+    return false;
+}
+
+bool MainWindow::findClientJar(QString *jar)
+{
+    QDir clientDir(settings->xmageInstallLocation + "/mage-client/lib");
+    QStringList filter;
+    filter << "mage-client*.jar";
+    QFileInfoList infoList = clientDir.entryInfoList(filter, QDir::Files);
+    if (infoList.isEmpty())
+    {
+        QMessageBox::warning(this, "Invalid XMage Configuration", "Unable to find XMage client jar file. Please set XMage location in settings.");
+        SettingsDialog *settingsDialog = new SettingsDialog(settings, this);
+        settingsDialog->showXmageSettings();
+        settingsDialog->open();
+        return false;
+    }
+    *jar = infoList.at(0).absoluteFilePath();
+    return true;
+}
+
+bool MainWindow::findServerJar(QString *jar)
+{
+    QDir clientDir(settings->xmageInstallLocation + "/mage-server/lib");
+    QStringList filter;
+    filter << "mage-server*.jar";
+    QFileInfoList infoList = clientDir.entryInfoList(filter, QDir::Files);
+    if (infoList.isEmpty())
+    {
+        QMessageBox::warning(this, "Invalid XMage Configuration", "Unable to find XMage server jar file. Please set XMage location in settings.");
+        SettingsDialog *settingsDialog = new SettingsDialog(settings, this);
+        settingsDialog->showXmageSettings();
+        settingsDialog->open();
+        return false;
+    }
+    *jar = infoList.at(0).absoluteFilePath();
+    return true;
 }
