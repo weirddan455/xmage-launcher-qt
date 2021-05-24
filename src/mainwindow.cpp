@@ -28,10 +28,14 @@ MainWindow::MainWindow(QWidget *parent)
     serverConsole->setGeometry(0, 0, 860, 480);
     serverConsole->setStyleSheet("background-color:black; color:white;");
     serverConsole->setReadOnly(true);
+    javaDialog = new JavaDialog(this);
+    aboutDialog = new AboutDialog(this);
 }
 
 MainWindow::~MainWindow()
 {
+    delete aboutDialog;
+    delete javaDialog;
     delete settings;
     delete background;
     delete ui;
@@ -157,6 +161,11 @@ void MainWindow::on_downloadButton_clicked()
     }
 }
 
+void MainWindow::on_javaButton_clicked()
+{
+    javaDialog->open();
+}
+
 void MainWindow::update_progress_bar(qint64 bytesReceived, qint64 bytesTotal)
 {
     float percentage = (float)bytesReceived / (float)bytesTotal * 100.0f + 0.5f;
@@ -185,17 +194,37 @@ void MainWindow::on_actionQuit_triggered()
     this->close();
 }
 
+void MainWindow::on_actionAbout_triggered()
+{
+    aboutDialog->open();
+}
+
+void MainWindow::on_actionAbout_Qt_triggered()
+{
+    QMessageBox::aboutQt(this);
+}
+
 void MainWindow::on_actionForum_triggered()
 {
-    loadBrowser("https://www.slightlymagic.net/forum/viewforum.php?f=70");
+    load_browser("https://www.slightlymagic.net/forum/viewforum.php?f=70");
 }
 
 void MainWindow::on_actionWebsite_triggered()
 {
-    loadBrowser("http://xmage.de/");
+    load_browser("http://xmage.de/");
 }
 
-void MainWindow::loadBrowser(QString url)
+void MainWindow::on_actionGitHub_XMage_triggered()
+{
+    load_browser("https://github.com/magefree/mage");
+}
+
+void MainWindow::on_actionGitHub_xmage_launcher_qt_triggered()
+{
+    load_browser("https://github.com/weirddan455/xmage-launcher-qt");
+}
+
+void MainWindow::load_browser(const QString &url)
 {
     if (QDesktopServices::openUrl(QUrl(url)))
     {
@@ -207,7 +236,7 @@ void MainWindow::loadBrowser(QString url)
     }
 }
 
-void MainWindow::on_server_quit()
+void MainWindow::server_finished()
 {
     serverProcess = nullptr;
     ui->serverButton->setText("Launch Server");
@@ -237,7 +266,7 @@ void MainWindow::launchServer()
         ui->clientServerButton->setEnabled(false);
         serverConsole->show();
         serverProcess = new XMageProcess(serverConsole);
-        connect(serverProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &MainWindow::on_server_quit);
+        connect(serverProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &MainWindow::server_finished);
         serverProcess->setWorkingDirectory(settings->xmageInstallLocation + "/mage-server");
         QStringList arguments = settings->currentServerOptions;
         arguments << "-jar" << serverJar;

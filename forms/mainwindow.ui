@@ -14,7 +14,7 @@
    <string>XMage Launcher</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="resources/resources.qrc">
+   <iconset resource="../resources/resources.qrc">
     <normaloff>:/icon-mage.png</normaloff>:/icon-mage.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
@@ -24,7 +24,7 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>650</x>
+      <x>690</x>
       <y>570</y>
       <width>111</width>
       <height>41</height>
@@ -40,7 +40,7 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>40</x>
+      <x>50</x>
       <y>570</y>
       <width>111</width>
       <height>41</height>
@@ -63,7 +63,7 @@
      <string/>
     </property>
     <property name="pixmap">
-     <pixmap resource="resources/resources.qrc">:/label-xmage.png</pixmap>
+     <pixmap resource="../resources/resources.qrc">:/label-xmage.png</pixmap>
     </property>
     <property name="scaledContents">
      <bool>true</bool>
@@ -124,7 +124,7 @@ color: white;</string>
    <widget class="QPushButton" name="serverButton">
     <property name="geometry">
      <rect>
-      <x>200</x>
+      <x>210</x>
       <y>570</y>
       <width>111</width>
       <height>41</height>
@@ -137,7 +137,7 @@ color: white;</string>
    <widget class="QPushButton" name="clientServerButton">
     <property name="geometry">
      <rect>
-      <x>350</x>
+      <x>370</x>
       <y>570</y>
       <width>111</width>
       <height>41</height>
@@ -146,6 +146,19 @@ color: white;</string>
     <property name="text">
      <string>Launch Client
 and Server</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="javaButton">
+    <property name="geometry">
+     <rect>
+      <x>530</x>
+      <y>570</y>
+      <width>111</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Get Java</string>
     </property>
    </widget>
   </widget>
@@ -176,12 +189,15 @@ and Server</string>
     </property>
     <addaction name="actionForum"/>
     <addaction name="actionWebsite"/>
+    <addaction name="actionGitHub_XMage"/>
+    <addaction name="actionGitHub_xmage_launcher_qt"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Help</string>
     </property>
     <addaction name="actionAbout"/>
+    <addaction name="actionAbout_Qt"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuTools"/>
@@ -213,9 +229,24 @@ and Server</string>
     <string>About</string>
    </property>
   </action>
+  <action name="actionAbout_Qt">
+   <property name="text">
+    <string>About Qt</string>
+   </property>
+  </action>
+  <action name="actionGitHub_XMage">
+   <property name="text">
+    <string>GitHub (XMage)</string>
+   </property>
+  </action>
+  <action name="actionGitHub_xmage_launcher_qt">
+   <property name="text">
+    <string>GitHub (xmage-launcher-qt)</string>
+   </property>
+  </action>
  </widget>
  <resources>
-  <include location="resources/resources.qrc"/>
+  <include location="../resources/resources.qrc"/>
  </resources>
  <connections/>
 </ui>
