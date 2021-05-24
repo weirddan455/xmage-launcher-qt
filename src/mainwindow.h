@@ -70,5 +70,6 @@ private:
     bool findServerJar(QString *jar);
     void launchClient();
     void launchServer();
+    void stopServer();
 };
 #endif // MAINWINDOW_H

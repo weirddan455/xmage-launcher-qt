@@ -31,7 +31,7 @@ private:
     MainWindow *mainWindow;
     QNetworkAccessManager *networkManager;
     QNetworkReply *downloadReply;
-    QSaveFile *saveFile;
+    QSaveFile *saveFile = nullptr;
 
     void pollFailed(QNetworkReply *reply, QString errorMessage);
     void startDownload(QUrl url, QNetworkReply *reply);

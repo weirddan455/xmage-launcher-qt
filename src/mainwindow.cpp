@@ -12,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->progressBar->hide();
+    ui->progressBar->setAlignment(Qt::AlignCenter);
     this->setFixedSize(this->size());
     QString imageName = QString::number(QRandomGenerator::global()->bounded(1, 17)) + ".jpg";
     QPixmap backgroundImage(":/backgrounds/" + imageName);
@@ -125,7 +126,7 @@ void MainWindow::on_serverButton_clicked()
     }
     else
     {
-        serverProcess->terminate();
+        stopServer();
     }
 }
 
@@ -182,7 +183,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (serverProcess != nullptr && QMessageBox::question(this, "XMage Server Running", "XMage server is still running. Would you like to close it? If not, it will need to be closed manually.") == QMessageBox::Yes)
     {
-        serverProcess->terminate();
+        stopServer();
     }
     delete clientConsole;
     delete serverConsole;
@@ -272,6 +273,19 @@ void MainWindow::launchServer()
         arguments << "-jar" << serverJar;
         serverProcess->start(settings->javaInstallLocation, arguments);
     }
+}
+
+void MainWindow::stopServer()
+{
+    /* Qt Documentation: https://doc.qt.io/qt-5/qprocess.html#terminate
+     * On Windows, terminate works by sending a WM_CLOSE message which does not work for console applications.
+     * On Unix based systems (including Mac OSX), it sends a SIGTERM which should work fine.
+     */
+#ifdef Q_OS_WINDOWS
+    serverProcess->kill();
+#else
+    serverProcess->terminate();
+#endif
 }
 
 bool MainWindow::validateJavaSettings()

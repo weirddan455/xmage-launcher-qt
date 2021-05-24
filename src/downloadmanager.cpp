@@ -10,6 +10,10 @@ DownloadManager::DownloadManager(QString downloadLocation, MainWindow *mainWindo
 
 DownloadManager::~DownloadManager()
 {
+    if (saveFile != nullptr)
+    {
+        delete saveFile;
+    }
     delete networkManager;
 }
 
@@ -133,6 +137,7 @@ void DownloadManager::startDownload(QUrl url, QNetworkReply *reply)
     {
         pollFailed(reply, "Failed to create file " + saveFile->fileName());
         delete saveFile;
+        saveFile = nullptr;
     }
     else
     {
@@ -154,6 +159,7 @@ void DownloadManager::save_data()
     {
         mainWindow->download_fail("Error writing to file " + saveFile->fileName());
         delete saveFile;
+        saveFile = nullptr;
         downloadReply->deleteLater();
         this->deleteLater();
     }
@@ -180,6 +186,7 @@ void DownloadManager::download_complete(QNetworkReply *reply)
         }
     }
     delete saveFile;
+    saveFile = nullptr;
     reply->deleteLater();
     this->deleteLater();
     if (errorMessage.isEmpty())
