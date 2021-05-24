@@ -5,8 +5,8 @@
 #include <QSaveFile>
 #include <QString>
 #include <QThread>
-#include <settings.h>
 #include <zip.h>
+#include "settings.h"
 
 #define UNZIP_BUFFER_SIZE 1024
 

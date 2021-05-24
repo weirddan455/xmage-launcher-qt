@@ -13,7 +13,7 @@
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 #include <QVector>
-#include <settings.h>
+#include "settings.h"
 
 struct JavaInfo
 {
