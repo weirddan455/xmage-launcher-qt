@@ -58,9 +58,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Oracle Java 8 is recommended as it includes JavaFX (needed for the &quot;What's New&quot; page.)
-OpenJDK builds and Java 11 may be used but they do not include JavaFX.
-The buttons below will direct you to where these can be downloaded (to be opened in your default web browser.)</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Oracle Java 8 is recommended as it includes JavaFX (needed for the &amp;quot;What's New&amp;quot; page.)&lt;/p&gt;&lt;p&gt;OpenJDK builds and Java 11 may be used but they do not include JavaFX.&lt;/p&gt;&lt;p&gt;The links below will direct you to where these can be downloaded.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
@@ -113,9 +111,9 @@ Links on the Windows tabs do include Linux builds if there are issues with the p
     <widget class="QLabel" name="archLabel">
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>110</y>
-       <width>491</width>
+       <x>10</x>
+       <y>100</y>
+       <width>551</width>
        <height>20</height>
       </rect>
      </property>
@@ -129,9 +127,9 @@ Links on the Windows tabs do include Linux builds if there are issues with the p
     <widget class="QLineEdit" name="archCmd">
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>150</y>
-       <width>311</width>
+       <x>20</x>
+       <y>130</y>
+       <width>321</width>
        <height>22</height>
       </rect>
      </property>
@@ -145,8 +143,125 @@ Links on the Windows tabs do include Linux builds if there are issues with the p
     <widget class="QPushButton" name="archButton">
      <property name="geometry">
       <rect>
-       <x>379</x>
-       <y>150</y>
+       <x>390</x>
+       <y>130</y>
+       <width>141</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Copy to Clipboard</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="ubuntuLabel">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>190</y>
+       <width>551</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Ubuntu</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="Line" name="line">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>80</y>
+       <width>551</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+    <widget class="Line" name="line_2">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>170</y>
+       <width>551</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="ubuntuCmd">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>220</y>
+       <width>321</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>sudo apt install openjdk-8-jre</string>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="ubuntuButton">
+     <property name="geometry">
+      <rect>
+       <x>390</x>
+       <y>220</y>
+       <width>141</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Copy to Clipboard</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="ubuntuLabelFX">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>260</y>
+       <width>541</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>OpenJFX for Java 8 has been removed in recent Ubuntu releases.
+On Ubuntu 18.04, it can be installed with the following command.</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="ubuntuFXCmd">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>310</y>
+       <width>321</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>sudo apt install openjfx=8u161-b12-1ubuntu2</string>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="ubuntuFXButton">
+     <property name="geometry">
+      <rect>
+       <x>390</x>
+       <y>310</y>
        <width>141</width>
        <height>22</height>
       </rect>

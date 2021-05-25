@@ -250,7 +250,7 @@ QVector<JavaInfo> SettingsDialog::detectSystemJava()
     QDir dir(linuxJavaHome);
     QStringList filter;
     filter << "java*";
-    QStringList javaList = dir.entryList(filter, QDir::Dirs);
+    QStringList javaList = dir.entryList(filter, QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
     QVector<JavaInfo> javaLocations;
     for (int i = 0; i < javaList.size(); i++)
     {
@@ -271,7 +271,7 @@ QVector<JavaInfo> SettingsDialog::detectSystemJava()
             }
             if (firstDashIndex != -1 && javaList.at(i).size() > firstDashIndex + 1)
             {
-                java.version.append("Java ");
+                java.version = "Java ";
                 firstDashIndex++;
                 for (int j = firstDashIndex; j < javaList.at(i).size() && stringData[j] != '-'; j++)
                 {
@@ -280,19 +280,19 @@ QVector<JavaInfo> SettingsDialog::detectSystemJava()
             }
             else
             {
-                java.version.append("Unknown Java Version");
+                java.version = "Unknown Java Version";
             }
             if (javaList.at(i).contains("openjdk", Qt::CaseInsensitive))
             {
-                java.vendor.append("OpenJDK");
+                java.vendor = "OpenJDK";
             }
             else if (javaList.at(i).contains("oracle", Qt::CaseInsensitive))
             {
-                java.vendor.append("Oracle");
+                java.vendor = "Oracle";
             }
             else
             {
-                java.vendor.append("Unknown Java Vendor");
+                java.vendor = "Unknown Java Vendor";
             }
             javaLocations.append(java);
         }

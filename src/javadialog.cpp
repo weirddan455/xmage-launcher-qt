@@ -19,3 +19,13 @@ void JavaDialog::on_archButton_clicked()
 {
     QApplication::clipboard()->setText(ui->archCmd->text());
 }
+
+void JavaDialog::on_ubuntuButton_clicked()
+{
+    QApplication::clipboard()->setText(ui->ubuntuCmd->text());
+}
+
+void JavaDialog::on_ubuntuFXButton_clicked()
+{
+    QApplication::clipboard()->setText(ui->ubuntuFXCmd->text());
+}

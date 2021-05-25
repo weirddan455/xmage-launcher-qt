@@ -20,6 +20,8 @@ public:
 
 private slots:
     void on_archButton_clicked();
+    void on_ubuntuButton_clicked();
+    void on_ubuntuFXButton_clicked();
 
 private:
     Ui::JavaDialog *ui;
